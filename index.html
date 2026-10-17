@@ -1,11 +1,543 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shear Modulus Virtual Lab</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    color: #17366b;
+    background: linear-gradient(135deg,#65e4ff,#d9fff0,#bdd9ff);
+}
+
+header {
+    text-align: center;
+    padding: 22px;
+    color: white;
+    background: linear-gradient(110deg,#073d91,#078fc5);
+    border-bottom: 5px solid #45e7d2;
+}
+
+header h1 { margin: 0; font-size: clamp(25px,4vw,38px); }
+header p { color: #fff39c; font-weight: bold; }
+
+.formula {
+    display: inline-block;
+    padding: 12px 20px;
+    margin: 8px;
+    border-radius: 12px;
+    background: #fff0a0;
+    color: #17366b;
+    font-weight: bold;
+}
+
+.container {
+    max-width: 1450px;
+    margin: auto;
+    padding: 15px;
+    display: grid;
+    grid-template-columns: 280px minmax(280px,1fr) 290px;
+    gap: 15px;
+    align-items: start;
+}
+
+.card {
+    background: rgba(255,255,255,.96);
+    border: 2px solid white;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px #145b9b25;
+}
+
+.card h2 {
+    margin: 0;
+    padding: 13px;
+    color: white;
+    font-size: 18px;
+    background: linear-gradient(90deg,#0875e1,#08b7d0);
+}
+
+.content { padding: 15px; }
+
+label {
+    display: block;
+    font-weight: bold;
+    margin: 15px 0 7px;
+}
+
+.value { float: right; color: #0875d9; }
+
+select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #b8ddff;
+    border-radius: 10px;
+    background: white;
+    color: #17366b;
+    font-size: 15px;
+}
+
+input[type=range] {
+    width: 100%;
+    accent-color: #12bd77;
+    cursor: pointer;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    background: linear-gradient(90deg,#18c978,#08a77c);
+    box-shadow: 0 4px 0 #09855e;
+    cursor: pointer;
+}
+
+button:hover { filter: brightness(1.08); }
+
+button.reset {
+    background: linear-gradient(90deg,#087df0,#04b8d1);
+    box-shadow: 0 4px 0 #0766a5;
+}
+
+.note {
+    background: #e4f4ff;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.scene {
+    height: 440px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 850px;
+    touch-action: pan-y;
+    background:
+        radial-gradient(ellipse at 50% 80%,#a6f4dc,transparent 60%),
+        linear-gradient(#9be6ff,#f0fcff 75%,#a3e6be);
+}
+
+.scene::before {
+    content: "🔬 EXPLORE THE MATERIAL";
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    color: #075ca7;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.ground {
+    position: absolute;
+    bottom: 65px;
+    width: 75%;
+    height: 24px;
+    border-radius: 50%;
+    background: #4c8c9b55;
+    filter: blur(8px);
+}
+
+.block-wrap {
+    position: relative;
+    width: 190px;
+    height: 220px;
+    transform-style: preserve-3d;
+    transform: rotateX(-15deg) rotateY(-28deg);
+    cursor: grab;
+    user-select: none;
+}
+
+.block-wrap:active { cursor: grabbing; }
+
+.block {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 190px;
+    height: 190px;
+    transform-style: preserve-3d;
+    transform-origin: bottom center;
+    transition: transform .35s;
+}
+
+.face {
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    border: 2px solid #ffffffc9;
+    background: linear-gradient(135deg,#40f0d2cc,#36a6ffcc,#a4ff77cc);
+    box-shadow: inset 0 0 24px #ffffff55;
+}
+
+.front {
+    transform: translateZ(95px);
+    background-image:
+        linear-gradient(to right,transparent 24%,#ffffff60 25%,transparent 26%,transparent 49%,#ffffff60 50%,transparent 51%,transparent 74%,#ffffff60 75%,transparent 76%),
+        linear-gradient(to bottom,transparent 24%,#ffffff60 25%,transparent 26%,transparent 49%,#ffffff60 50%,transparent 51%,transparent 74%,#ffffff60 75%,transparent 76%),
+        linear-gradient(135deg,#26d7dc,#85f16d);
+}
+
+.back { transform: translateZ(-95px) rotateY(180deg); }
+.right {
+    transform: rotateY(90deg) translateZ(95px);
+    background: linear-gradient(135deg,#178bdb,#6bceff);
+}
+.left {
+    transform: rotateY(-90deg) translateZ(95px);
+    background: linear-gradient(135deg,#48d6b5,#1686c5);
+}
+.top {
+    transform: rotateX(90deg) translateZ(95px);
+    background: linear-gradient(135deg,#d1faff,#44c9ed);
+}
+.bottom {
+    transform: rotateX(-90deg) translateZ(95px);
+    background: #248b99;
+}
+
+.top-plate {
+    position: absolute;
+    width: 205px;
+    height: 205px;
+    left: -7px;
+    bottom: 185px;
+    border: 5px solid #d7f7ff;
+    border-radius: 9px;
+    background: linear-gradient(135deg,#d5efff,#507d9f);
+    box-shadow: 0 8px 10px #194a6a55;
+    transform: rotateX(90deg) translateZ(-95px);
+    transition: transform .35s;
+}
+
+.force-arrow {
+    position: absolute;
+    left: 53%;
+    top: 12%;
+    font-size: 50px;
+    color: #f04436;
+    text-shadow: 2px 3px white;
+    transition: left .35s;
+}
+
+.scene-help {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background: #ffffffdc;
+    text-align: center;
+    font-size: 13px;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 13px 10px;
+    border-bottom: 1px solid #d6eaff;
+    font-size: 13px;
+}
+
+.metric span { font-weight: bold; }
+.metric strong { color: #075fbc; text-align: right; overflow-wrap: anywhere; }
+.metric:nth-child(3) { background: #f1e8ff; }
+.metric:nth-child(4) { background: #e2f9e9; }
+.metric:nth-child(5) { background: #fff4c8; }
+
+.lower {
+    max-width: 1450px;
+    margin: auto;
+    padding: 0 15px 15px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.tabs { display: flex; gap: 5px; padding: 12px 12px 0; }
+.tabs button {
+    margin: 0;
+    padding: 10px 5px;
+    background: #dfedff;
+    color: #15518c;
+    box-shadow: none;
+    font-size: 13px;
+}
+.tabs button.active { background: #087be7; color: white; }
+
+.tab-text { padding: 15px; line-height: 1.6; }
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 280px;
+}
+
+.table-wrap { padding: 12px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th,td { border: 1px solid #c8e1ff; padding: 9px 5px; text-align: center; }
+th { background: #dceeff; }
+tbody tr:nth-child(even) { background: #f3faff; }
+
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #124c84;
+    font-weight: bold;
+}
+
+@media(max-width:1050px) {
+    .container { grid-template-columns: 1fr 1fr; }
+    .scene-card { grid-column: 1/-1; grid-row: 1; }
+}
+
+@media(max-width:650px) {
+    .container,.lower { grid-template-columns: 1fr; }
+    .scene-card { grid-column: auto; }
+    .scene { height: 360px; }
+    .block-wrap { transform: scale(.8) rotateX(-15deg) rotateY(-28deg); }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🧊 Shear Modulus Virtual Lab</h1>
+    <p>Push it sideways • Watch it deform • Discover rigidity!</p>
+    <div class="formula">G = Shear Stress ÷ Shear Strain</div>
+</header>
+
+<main class="container">
+
+<section class="card">
+    <h2>⚙️ Experiment Controls</h2>
+    <div class="content">
+
+        <label for="material">🧱 Select Material</label>
+        <select id="material">
+            <option value="rubber">Soft Rubber</option>
+            <option value="wood">Wood (approx.)</option>
+            <option value="aluminium">Aluminium</option>
+            <option value="copper">Copper</option>
+            <option value="steel">Steel</option>
+        </select>
+
+        <label for="force">➡️ Applied Force <span class="value" id="forceVal"></span></label>
+        <input type="range" id="force" min="0" max="1000" step="10" value="500">
+
+        <label for="width">↔️ Block Width <span class="value" id="widthVal"></span></label>
+        <input type="range" id="width" min="0.05" max="0.30" step="0.01" value="0.10">
+
+        <label for="depth">📐 Block Depth <span class="value" id="depthVal"></span></label>
+        <input type="range" id="depth" min="0.05" max="0.30" step="0.01" value="0.10">
+
+        <label for="height">📏 Block Height <span class="value" id="heightVal"></span></label>
+        <input type="range" id="height" min="0.10" max="0.40" step="0.01" value="0.20">
+
+        <button id="applyBtn">▶ Apply Force</button>
+        <button class="reset" id="resetBtn">↻ Reset Experiment</button>
+
+        <div class="note">
+            💡 Change the sliders and material. Apply force to see
+            the block deform. Drag the block to rotate it.
+        </div>
+    </div>
+</section>
+
+<section class="card scene-card">
+    <h2>🔬 Interactive 3D Visualization</h2>
+    <div class="scene" id="scene">
+        <div class="ground"></div>
+        <div class="block-wrap" id="blockWrap">
+            <div class="block" id="block">
+                <div class="face front"></div>
+                <div class="face back"></div>
+                <div class="face right"></div>
+                <div class="face left"></div>
+                <div class="face top"></div>
+                <div class="face bottom"></div>
+            </div>
+            <div class="top-plate" id="topPlate"></div>
+        </div>
+        <div class="force-arrow" id="forceArrow">➜</div>
+        <div class="scene-help">🟢 Fixed bottom | ➡️ Moving top | Drag to rotate</div>
+    </div>
+</section>
+
+<section class="card">
+    <h2>📊 Live Results</h2>
+    <div class="content" style="padding:0 12px 12px">
+        <div class="metric"><span>Shear Force (F)</span><strong id="rForce"></strong></div>
+        <div class="metric"><span>Area (A)</span><strong id="rArea"></strong></div>
+        <div class="metric"><span>Shear Stress (τ)</span><strong id="rStress"></strong></div>
+        <div class="metric"><span>Shear Strain (γ)</span><strong id="rStrain"></strong></div>
+        <div class="metric"><span>Shear Modulus (G)</span><strong id="rModulus"></strong></div>
+        <div class="note">💡 A high shear modulus means a material resists changes in shape more strongly.</div>
+    </div>
+</section>
+
+</main>
+
+<section class="lower">
+
+<section class="card">
+    <h2>🧠 Learn & Explore</h2>
+    <div class="tabs">
+        <button class="active" data-tab="theory">📘 Theory</button>
+        <button data-tab="procedure">🧪 Procedure</button>
+        <button data-tab="key">⭐ Key Points</button>
+    </div>
+    <div class="tab-text" id="tabText">
+        <h3>What is Shear Modulus?</h3>
+        Shear modulus, also called modulus of rigidity, measures
+        how strongly a solid resists a change in shape caused by
+        a tangential force.
+        <p><b>G = Shear Stress / Shear Strain</b></p>
+        <p>Shear stress = F / A</p>
+        <p>Shear strain = sideways displacement / height</p>
+        <p>Unit of G: Pascal (Pa)</p>
+    </div>
+</section>
+
+<section class="card">
+    <h2>📈 Shear Stress vs Shear Strain</h2>
+    <div class="content">
+        <canvas id="graph" width="600" height="340"></canvas>
+        <div class="note">The slope of the straight-line graph in the elastic region is the shear modulus.</div>
+    </div>
+</section>
+
+<section class="card">
+    <h2>📝 Observation Table</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Trial</th><th>Force (N)</th><th>Stress (Pa)</th>
+                    <th>Strain</th><th>G (Pa)</th>
+                </tr>
+            </thead>
+            <tbody id="observations">
+                <tr><td colspan="5">No readings recorded yet.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="content"><button id="recordBtn">＋ Record Reading</button></div>
+</section>
+
+<section class="card">
+    <h2>🎯 Experiment Details</h2>
+    <div class="content">
+        <h3>Objective</h3>
+        To understand how a tangential force changes the shape of
+        a solid and how shear modulus is calculated.
+        <h3>Procedure</h3>
+        <ol>
+            <li>Select a material.</li>
+            <li>Set force and block dimensions.</li>
+            <li>Click Apply Force.</li>
+            <li>Observe the deformation and calculated values.</li>
+            <li>Record readings and compare materials.</li>
+        </ol>
+        <h3>Conclusion</h3>
+        For a given shear stress, a material with a larger shear
+        modulus undergoes less shear strain.
+    </div>
+</section>
+
+</section>
+
+<footer>✨ Small Forces • Big Discoveries • Great Learning! ✨</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const materials = {
+    rubber:    { G: 1e6 },
+    wood:      { G: 1e9 },
+    aluminium: { G: 26e9 },
+    copper:    { G: 44e9 },
+    steel:     { G: 79e9 }
+};
+
+let applied = false;
+let readings = [];
+
+function calculate() {
+    const F = Number($("force").value);
+    const w = Number($("width").value);
+    const d = Number($("depth").value);
+    const h = Number($("height").value);
+    const G = materials[$("material").value].G;
+    const A = w * d;
+    const stress = A > 0 ? F / A : 0;
+    const strain = stress / G;
+    const displacement = strain * h;
+
+    return {F,w,d,h,G,A,stress,strain,displacement};
+}
+
+function formatModulus(G) {
+    if (G >= 1e9) return (G / 1e9).toFixed(2) + " GPa";
+    if (G >= 1e6) return (G / 1e6).toFixed(2) + " MPa";
+    return G.toExponential(2) + " Pa";
+}
+
+function update() {
+    const v = calculate();
+
+    $("forceVal").textContent = v.F + " N";
+    $("widthVal").textContent = v.w.toFixed(2) + " m";
+    $("depthVal").textContent = v.d.toFixed(2) + " m";
+    $("heightVal").textContent = v.h.toFixed(2) + " m";
+
+    $("rForce").textContent = v.F + " N";
+    $("rArea").textContent = v.A.toFixed(4) + " m²";
+    $("rStress").textContent = v.stress.toExponential(3) + " Pa";
+    $("rStrain").textContent = v.strain.toExponential(3);
+    $("rModulus").textContent = formatModulus(v.G);
+
+    // Visual movement is exaggerated to make the effect easy to see.
+    const shift = applied ? Math.min(90, v.strain * 1000) : 0;
+
+    $("block").style.transform =
+        `translateX(${shift}px) skewY(${-shift * 0.12}deg)`;
+
+    $("topPlate").style.transform =
+        `translateX(${shift}px) rotateX(90deg) translateZ(-95px)`;
+
+    $("forceArrow").style.left = (48 + shift * 0.15) + "%";
+
+    drawGraph(v);
+}
+
+/* FIXED GRAPH:
+   Draws the graph using independent X and Y scales.
+   It also handles zero force and very small strain values.
+*/
 function drawGraph(v) {
-    const canvas = document.getElementById("graph");
+    const canvas = $("graph");
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
-
-    // Use the actual canvas resolution
     const W = canvas.width;
     const H = canvas.height;
 
@@ -21,17 +553,17 @@ function drawGraph(v) {
     const plotWidth = right - left;
     const plotHeight = bottom - top;
 
-    // Fixed positive ranges prevent a zero-size graph
+    // Use stable positive limits, even when force = 0.
     const maxStrain = Math.max(v.strain * 1.25, 0.01);
     const maxStress = Math.max(v.stress * 1.25, 1);
 
-    // Draw grid lines
+    // Grid
     ctx.strokeStyle = "#d6e7f7";
     ctx.lineWidth = 1;
 
     for (let i = 0; i <= 5; i++) {
-        const x = left + (plotWidth * i) / 5;
-        const y = top + (plotHeight * i) / 5;
+        const x = left + plotWidth * i / 5;
+        const y = top + plotHeight * i / 5;
 
         ctx.beginPath();
         ctx.moveTo(x, top);
@@ -44,24 +576,22 @@ function drawGraph(v) {
         ctx.stroke();
     }
 
-    // Draw axes
+    // Axes
     ctx.strokeStyle = "#173c70";
     ctx.lineWidth = 2;
-
     ctx.beginPath();
     ctx.moveTo(left, top);
     ctx.lineTo(left, bottom);
     ctx.lineTo(right, bottom);
     ctx.stroke();
 
-    // Axis numbers
+    // Numeric labels
     ctx.fillStyle = "#173c70";
     ctx.font = "12px Arial";
 
     for (let i = 0; i <= 5; i++) {
         const strainValue = maxStrain * i / 5;
         const stressValue = maxStress * i / 5;
-
         const x = left + plotWidth * i / 5;
         const y = bottom - plotHeight * i / 5;
 
@@ -72,33 +602,23 @@ function drawGraph(v) {
         ctx.fillText(stressValue.toExponential(1), left - 9, y + 4);
     }
 
-    // X-axis label
-    ctx.textAlign = "center";
+    // Axis titles
+    ctx.fillStyle = "#173c70";
     ctx.font = "bold 14px Arial";
-    ctx.fillText(
-        "Shear Strain (γ)",
-        (left + right) / 2,
-        H - 15
-    );
-
-    // Y-axis label
-    ctx.save();
-    ctx.translate(20, (top + bottom) / 2);
-    ctx.rotate(-Math.PI / 2);
     ctx.textAlign = "center";
+    ctx.fillText("Shear Strain (γ)", (left + right) / 2, H - 15);
+
+    ctx.save();
+    ctx.translate(19, (top + bottom) / 2);
+    ctx.rotate(-Math.PI / 2);
     ctx.fillText("Shear Stress (Pa)", 0, 0);
     ctx.restore();
 
-    // Convert a data point into canvas coordinates
-    function graphX(strain) {
-        return left + (strain / maxStrain) * plotWidth;
-    }
+    // Map data values to canvas pixels.
+    const graphX = strain => left + (strain / maxStrain) * plotWidth;
+    const graphY = stress => bottom - (stress / maxStress) * plotHeight;
 
-    function graphY(stress) {
-        return bottom - (stress / maxStress) * plotHeight;
-    }
-
-    // Draw the stress-strain line from the origin
+    // Draw line from origin to current reading.
     ctx.strokeStyle = "#087df0";
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -106,24 +626,157 @@ function drawGraph(v) {
     ctx.lineTo(graphX(v.strain), graphY(v.stress));
     ctx.stroke();
 
-    // Draw the current reading
+    // Current reading point
     ctx.fillStyle = "#ff8a00";
     ctx.beginPath();
-    ctx.arc(
-        graphX(v.strain),
-        graphY(v.stress),
-        6,
-        0,
-        Math.PI * 2
-    );
+    ctx.arc(graphX(v.strain), graphY(v.stress), 6, 0, Math.PI * 2);
     ctx.fill();
 
-    // Graph legend
+    // Legend
     ctx.fillStyle = "#087df0";
-    ctx.fillRect(right - 145, top + 8, 14, 4);
-
+    ctx.fillRect(right - 140, top + 8, 16, 4);
     ctx.fillStyle = "#173c70";
     ctx.font = "12px Arial";
     ctx.textAlign = "right";
-    ctx.fillText("Current reading", right, top + 27);
+    ctx.fillText("Current reading", right, top + 28);
 }
+
+$("applyBtn").addEventListener("click", () => {
+    applied = !applied;
+    $("applyBtn").textContent = applied
+        ? "⏸ Release Force"
+        : "▶ Apply Force";
+    update();
+});
+
+$("resetBtn").addEventListener("click", () => {
+    $("material").value = "rubber";
+    $("force").value = 500;
+    $("width").value = 0.10;
+    $("depth").value = 0.10;
+    $("height").value = 0.20;
+
+    applied = false;
+    readings = [];
+    $("applyBtn").textContent = "▶ Apply Force";
+    $("observations").innerHTML =
+        '<tr><td colspan="5">No readings recorded yet.</td></tr>';
+
+    update();
+});
+
+["material","force","width","depth","height"].forEach(id => {
+    $(id).addEventListener("input", update);
+    $(id).addEventListener("change", update);
+});
+
+$("recordBtn").addEventListener("click", () => {
+    readings.push(calculate());
+    $("observations").innerHTML = "";
+
+    readings.slice(-10).forEach((r, index) => {
+        const tr = document.createElement("tr");
+        const trialNumber = readings.length - Math.min(readings.length,10) + index + 1;
+
+        [
+            trialNumber,
+            r.F,
+            r.stress.toExponential(2),
+            r.strain.toExponential(2),
+            r.G.toExponential(2)
+        ].forEach(value => {
+            const td = document.createElement("td");
+            td.textContent = value;
+            tr.appendChild(td);
+        });
+
+        $("observations").appendChild(tr);
+    });
+});
+
+const tabContents = {
+    theory: `
+        <h3>What is Shear Modulus?</h3>
+        Shear modulus, also called modulus of rigidity, measures
+        a material's resistance to a change in shape caused by a
+        tangential force.
+        <p><b>G = Shear Stress / Shear Strain</b></p>
+        <p>Shear stress = F / A</p>
+        <p>Shear strain = sideways displacement / height</p>
+        <p>Unit of G: Pascal (Pa)</p>
+    `,
+    procedure: `
+        <h3>Experiment Procedure</h3>
+        <ol>
+            <li>Select a material.</li>
+            <li>Set the force and block dimensions.</li>
+            <li>Click Apply Force.</li>
+            <li>Observe the block and results.</li>
+            <li>Record readings and compare materials.</li>
+        </ol>
+    `,
+    key: `
+        <h3>Remember!</h3>
+        <ul>
+            <li>Shear stress is measured in Pa.</li>
+            <li>Shear strain has no unit.</li>
+            <li>Shear modulus is measured in Pa.</li>
+            <li>Higher G means greater rigidity.</li>
+            <li>The visual movement is exaggerated.</li>
+        </ul>
+    `
+};
+
+document.querySelectorAll(".tabs button").forEach(button => {
+    button.addEventListener("click", () => {
+        document.querySelectorAll(".tabs button").forEach(b =>
+            b.classList.remove("active")
+        );
+        button.classList.add("active");
+        $("tabText").innerHTML = tabContents[button.dataset.tab];
+    });
+});
+
+// Drag the block to rotate its 3D-style view.
+let dragging = false;
+let startX = 0;
+let startY = 0;
+let rotateX = -15;
+let rotateY = -28;
+
+const wrap = $("blockWrap");
+
+wrap.addEventListener("pointerdown", event => {
+    dragging = true;
+    startX = event.clientX;
+    startY = event.clientY;
+    wrap.setPointerCapture(event.pointerId);
+});
+
+wrap.addEventListener("pointermove", event => {
+    if (!dragging) return;
+
+    rotateY += (event.clientX - startX) * 0.7;
+    rotateX -= (event.clientY - startY) * 0.5;
+    rotateX = Math.max(-70, Math.min(70, rotateX));
+
+    wrap.style.transform =
+        `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+    startX = event.clientX;
+    startY = event.clientY;
+});
+
+function stopDragging() {
+    dragging = false;
+}
+
+wrap.addEventListener("pointerup", stopDragging);
+wrap.addEventListener("pointercancel", stopDragging);
+
+// Draw the graph as soon as the page loads.
+update();
+</script>
+
+</body>
+</html>
